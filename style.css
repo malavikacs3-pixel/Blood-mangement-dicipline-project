@@ -1,0 +1,1224 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blood Management System</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Arial,sans-serif;background:#fffafa;color:#333;line-height:1.6}
+header{background:linear-gradient(135deg,#b30000,#700000);color:white;padding:18px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 4px 15px #0003}
+header h1{font-size:23px}
+nav{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+nav a{color:white;text-decoration:none;font-weight:bold;padding:7px 10px;border-radius:18px}
+nav a:hover{background:white;color:#b30000}
+.hero{text-align:center;padding:75px 20px;background:linear-gradient(#ffebeb,#fff8f8)}
+.hero h2{color:#b30000;font-size:38px;margin-bottom:12px}
+.hero p{font-size:18px;color:#555}
+.section{padding:55px 20px;max-width:1100px;margin:auto}
+.section h2{text-align:center;color:#b30000;margin-bottom:28px;font-size:29px}
+form,.panel{max-width:700px;margin:18px auto;background:white;padding:25px;border-radius:14px;box-shadow:0 5px 18px #0001;border-top:5px solid #b30000}
+label{display:block;font-weight:bold;margin:8px 0 5px}
+input,select{width:100%;padding:12px;margin:5px 0 14px;border:1px solid #ccc;border-radius:7px;font-size:15px}
+input:focus,select:focus{outline:none;border-color:#b30000;box-shadow:0 0 5px #b3000033}
+button{background:linear-gradient(135deg,#b30000,#800000);color:white;border:0;padding:11px 18px;border-radius:7px;cursor:pointer;font-weight:bold;margin:5px 4px 5px 0}
+button:hover{opacity:.9}
+button.secondary{background:#555}
+button.green{background:#198754}
+button.orange{background:#c77700}
+.result{max-width:850px;margin:20px auto;padding:18px;background:#fff5f5;border-radius:10px;border-left:5px solid #b30000}
+.cards{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;padding:30px 15px;background:white}
+.home-card{background:white;border-top:5px solid #b30000;border-radius:12px;padding:25px;width:250px;text-align:center;box-shadow:0 5px 18px #0001}
+.home-card h3{color:#b30000;margin-bottom:8px}
+.donor-card,.request-card,.notification{background:white;border:1px solid #eee;border-left:5px solid #b30000;padding:17px;margin:13px 0;border-radius:10px;box-shadow:0 3px 12px #0000000d}
+.donor-card p,.request-card p{margin:4px 0}
+.pending{color:#c77700;font-weight:bold}
+.fulfilled,.eligible{color:green;font-weight:bold}
+.not-eligible{color:#b30000;font-weight:bold}
+.emergency{border-left-color:#e00000;background:#fff0f0}
+.emergency-label{display:inline-block;background:#b30000;color:white;padding:3px 9px;border-radius:12px;font-size:12px;font-weight:bold}
+.stock-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:14px;max-width:900px;margin:20px auto}
+.stock-card{background:white;padding:18px;border-radius:12px;text-align:center;border-top:5px solid #b30000;box-shadow:0 4px 14px #0001}
+.stock-card h3{color:#b30000;font-size:23px}
+.stock-card strong{font-size:27px}
+.low-stock{color:#b30000;font-weight:bold}
+.good-stock{color:green;font-weight:bold}
+#app{display:none}
+#authArea{min-height:75vh;padding:35px 15px;background:#fffafa}
+.auth-tabs{text-align:center;margin:15px}
+#authMessage{text-align:center;margin:12px;color:#b30000;font-weight:bold}
+#contact{background:#fff0f0;border-radius:14px;text-align:center}
+footer{background:linear-gradient(135deg,#800000,#4d0000);color:white;text-align:center;padding:24px;margin-top:30px}
+.small{font-size:13px;color:#666}
+.notice{max-width:850px;margin:15px auto;padding:13px;background:#fff4d6;border-left:5px solid #d69a00;border-radius:8px}
+@media(max-width:700px){
+header{flex-direction:column;text-align:center}
+header h1{font-size:20px}
+nav a{font-size:12px;padding:6px}
+.hero h2{font-size:29px}
+.section{padding:38px 14px}
+form,.panel{padding:20px 15px}
+button{max-width:100%}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🩸 Blood Management System</h1>
+
+<nav id="mainNav" style="display:none">
+<a href="#home">Home</a>
+<a href="#stock">Blood Stock</a>
+<a href="#find">Find Blood</a>
+<a href="#donor">Become a Donor</a>
+<a href="#request">Request Blood</a>
+<a href="#management">Donor Management</a>
+<a href="#bloodRequests">Request Management</a>
+<a href="#account">Account</a>
+</nav>
+
+<div id="headerAccount" style="display:none">
+<span id="loggedUser"></span>
+<button class="secondary" onclick="logout()">Logout</button>
+</div>
+</header>
+
+<!-- USER AUTHENTICATION -->
+
+<section id="authArea">
+
+<h2 style="text-align:center;color:#b30000">
+Welcome to Blood Management System
+</h2>
+
+<p style="text-align:center">
+Please register or log in to access the system.
+</p>
+
+<div class="auth-tabs">
+<button onclick="showAuth('login')">Login</button>
+<button class="secondary" onclick="showAuth('register')">
+Create Account
+</button>
+</div>
+
+<form id="loginForm" onsubmit="login(event)">
+
+<h3 style="color:#b30000;text-align:center">User Login</h3>
+
+<label>Email Address</label>
+<input type="email" id="loginEmail" required>
+
+<label>Password</label>
+<input type="password" id="loginPassword" required>
+
+<button type="submit">Login</button>
+
+</form>
+
+<form id="registerForm" onsubmit="registerUser(event)" style="display:none">
+
+<h3 style="color:#b30000;text-align:center">Create New Account</h3>
+
+<label>Full Name</label>
+<input type="text" id="regName" required>
+
+<label>Email Address</label>
+<input type="email" id="regEmail" required>
+
+<label>Password (minimum 8 characters)</label>
+<input type="password" id="regPassword" minlength="8" required>
+
+<button type="submit">Register</button>
+
+</form>
+
+<div id="authMessage"></div>
+
+<p class="small" style="text-align:center;max-width:700px;margin:15px auto">
+Demonstration project: account data is stored in this browser.
+This is not production-grade authentication.
+</p>
+
+</section>
+
+<div id="app">
+
+<!-- HOME -->
+
+<section id="home" class="hero">
+
+<h2>Blood Management System</h2>
+
+<p>
+Connecting blood donors and blood requests quickly and efficiently.
+</p>
+
+<p id="welcomeText" style="margin-top:10px;font-weight:bold;color:#800000"></p>
+
+</section>
+
+<section class="cards">
+
+<div class="home-card">
+<h3>Find Blood</h3>
+<p>Search registered donors by blood group.</p>
+</div>
+
+<div class="home-card">
+<h3>Become a Donor</h3>
+<p>Register as a donor and help save lives.</p>
+</div>
+
+<div class="home-card">
+<h3>Emergency Requests</h3>
+<p>Highlight urgent blood requirements.</p>
+</div>
+
+<div class="home-card">
+<h3>Blood Stock</h3>
+<p>View available units for each blood group.</p>
+</div>
+
+</section>
+
+<!-- EMERGENCY NOTIFICATION -->
+
+<section id="notifications" class="section">
+
+<h2>🔔 Emergency Blood Request Notifications</h2>
+
+<div id="notificationList" class="result">
+No emergency requests at present.
+</div>
+
+</section>
+
+<!-- BLOOD STOCK BOARD -->
+
+<section id="stock" class="section">
+
+<h2>Blood Stock Board</h2>
+
+<p style="text-align:center">
+Current recorded blood units available in the system.
+</p>
+
+<div id="stockBoard" class="stock-grid"></div>
+
+<form onsubmit="updateStock(event)">
+
+<h3 style="color:#b30000">Update Blood Stock</h3>
+
+<label>Blood Group</label>
+
+<select id="stockGroup" required>
+<option value="">Select Blood Group</option>
+<option>A+</option>
+<option>A-</option>
+<option>B+</option>
+<option>B-</option>
+<option>AB+</option>
+<option>AB-</option>
+<option>O+</option>
+<option>O-</option>
+</select>
+
+<label>Units to add or remove (use a negative number to remove)</label>
+
+<input type="number" id="stockChange" required step="1">
+
+<button type="submit">Update Stock</button>
+
+<div id="stockMessage"></div>
+
+</form>
+
+<p class="notice small">
+Stock figures are sample project records. Confirm actual availability
+and compatibility with a licensed blood bank before any transfusion.
+</p>
+
+</section>
+
+<!-- FIND BLOOD -->
+
+<section id="find" class="section">
+
+<h2>Find Blood</h2>
+
+<form onsubmit="searchBlood(event)">
+
+<label>Blood Group</label>
+
+<select id="bloodGroup" required>
+<option value="">Select Blood Group</option>
+<option>A+</option>
+<option>A-</option>
+<option>B+</option>
+<option>B-</option>
+<option>AB+</option>
+<option>AB-</option>
+<option>O+</option>
+<option>O-</option>
+</select>
+
+<button type="submit">Search Blood</button>
+
+</form>
+
+<div id="searchResult" class="result"></div>
+
+</section>
+
+<!-- BECOME A DONOR -->
+
+<section id="donor" class="section">
+
+<h2>Become a Donor</h2>
+
+<form id="donorForm" onsubmit="registerDonorForm(event)">
+
+<label>Full Name</label>
+<input id="donorName" type="text" required>
+
+<label>Age</label>
+<input id="donorAge" type="number" min="18" required>
+
+<label>Blood Group</label>
+
+<select id="donorBloodGroup" required>
+<option value="">Select Blood Group</option>
+<option>A+</option>
+<option>A-</option>
+<option>B+</option>
+<option>B-</option>
+<option>AB+</option>
+<option>AB-</option>
+<option>O+</option>
+<option>O-</option>
+</select>
+
+<label>Phone Number (10 digits)</label>
+<input id="donorPhone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+
+<label>Location</label>
+<input id="donorLocation" type="text" required>
+
+<button type="submit">Register as Donor</button>
+
+</form>
+
+<div id="donorResult" class="result"></div>
+
+</section>
+
+<!-- REQUEST BLOOD -->
+
+<section id="request" class="section">
+
+<h2>Request Blood</h2>
+
+<form id="requestForm" onsubmit="requestBlood(event)">
+
+<label>Patient Name</label>
+<input id="patientName" required>
+
+<label>Patient Age</label>
+<input id="patientAge" type="number" min="0" required>
+
+<label>Blood Group</label>
+
+<select id="requestBloodGroup" required>
+<option value="">Select Blood Group</option>
+<option>A+</option>
+<option>A-</option>
+<option>B+</option>
+<option>B-</option>
+<option>AB+</option>
+<option>AB-</option>
+<option>O+</option>
+<option>O-</option>
+</select>
+
+<label>Required Units</label>
+<input id="requestUnits" type="number" min="1" value="1" required>
+
+<label>Phone Number (10 digits)</label>
+<input id="patientPhone" type="tel" pattern="[0-9]{10}" maxlength="10" required>
+
+<label>Location / Hospital</label>
+<input id="patientLocation" required>
+
+<label>
+<input type="checkbox" id="isEmergency" style="width:auto;margin-right:8px">
+This is an emergency blood request
+</label>
+
+<button type="submit">Submit Blood Request</button>
+
+</form>
+
+<div id="requestResult" class="result"></div>
+
+</section>
+
+<!-- DONOR MANAGEMENT -->
+
+<section id="management" class="section">
+
+<h2>Donor Management</h2>
+
+<div style="text-align:center">
+<button onclick="displayDonors()">View Registered Donors</button>
+</div>
+
+<div id="donorList" class="result"></div>
+
+</section>
+
+<!-- BLOOD REQUEST MANAGEMENT -->
+
+<section id="bloodRequests" class="section">
+
+<h2>Blood Request Management</h2>
+
+<form onsubmit="displayBloodRequests(event)">
+
+<label>Filter by Blood Group</label>
+
+<select id="managementBloodGroup" required>
+<option value="">Select Blood Group</option>
+<option>A+</option>
+<option>A-</option>
+<option>B+</option>
+<option>B-</option>
+<option>AB+</option>
+<option>AB-</option>
+<option>O+</option>
+<option>O-</option>
+</select>
+
+<button type="submit">View Requests</button>
+
+</form>
+
+<div id="requestList" class="result"></div>
+
+</section>
+
+<!-- ACCOUNT -->
+
+<section id="account" class="section">
+
+<h2>Account</h2>
+
+<div class="panel" style="text-align:center">
+
+<p>Logged in as: <strong id="accountName"></strong></p>
+
+<p id="accountEmail"></p>
+
+<button class="secondary" onclick="logout()">Logout</button>
+
+</div>
+
+</section>
+
+<!-- CONTACT -->
+
+<section id="contact" class="section">
+
+<h2>Contact Us</h2>
+
+<p>For blood donation and blood request assistance, please contact our team.</p>
+
+<p><strong>Email:</strong> bloodmanagement@example.com</p>
+
+<p><strong>Phone:</strong> +91 9876543210</p>
+
+</section>
+
+<footer>
+<p>© 2026 Blood Management System | Developed using HTML, CSS and JavaScript</p>
+</footer>
+
+</div>
+
+<script>
+
+// BASIC STORAGE FUNCTIONS
+
+const GROUPS = ["A+","A-","B+","B-","AB+","AB-","O+","O-"];
+
+const getData = (key, fallback) => {
+try {
+return JSON.parse(localStorage.getItem(key)) ?? fallback;
+}
+catch {
+return fallback;
+}
+};
+
+const setData = (key, value) =>
+localStorage.setItem(key, JSON.stringify(value));
+
+
+// AUTHENTICATION
+
+function showAuth(which) {
+
+document.getElementById("loginForm").style.display =
+which === "login" ? "block" : "none";
+
+document.getElementById("registerForm").style.display =
+which === "register" ? "block" : "none";
+
+document.getElementById("authMessage").textContent = "";
+
+}
+
+// SHA-256 password hashing for this browser-based demonstration.
+// This is not production-grade authentication.
+
+async function hashPassword(password) {
+
+if (!crypto.subtle)
+throw new Error("Secure browser context required for password hashing.");
+
+const bytes = new TextEncoder().encode(password);
+
+const hash = await crypto.subtle.digest("SHA-256", bytes);
+
+return Array.from(new Uint8Array(hash))
+.map(b => b.toString(16).padStart(2,"0"))
+.join("");
+
+}
+
+async function registerUser(event) {
+
+event.preventDefault();
+
+const name = document.getElementById("regName").value.trim();
+
+const email = document.getElementById("regEmail").value.trim().toLowerCase();
+
+const password = document.getElementById("regPassword").value;
+
+const users = getData("bmsUsers", []);
+
+if (users.some(u => u.email === email)) {
+
+document.getElementById("authMessage").textContent =
+"An account with this email already exists.";
+
+return;
+
+}
+
+try {
+
+users.push({
+name,
+email,
+passwordHash: await hashPassword(password)
+});
+
+setData("bmsUsers", users);
+
+document.getElementById("registerForm").reset();
+
+showAuth("login");
+
+document.getElementById("authMessage").textContent =
+"Account created. Please log in.";
+
+}
+catch(error) {
+
+document.getElementById("authMessage").textContent = error.message;
+
+}
+
+}
+
+async function login(event) {
+
+event.preventDefault();
+
+const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+
+const password = document.getElementById("loginPassword").value;
+
+try {
+
+const hash = await hashPassword(password);
+
+const user = getData("bmsUsers", []).find(
+u => u.email === email && u.passwordHash === hash
+);
+
+if (!user) {
+
+document.getElementById("authMessage").textContent =
+"Invalid email or password.";
+
+return;
+
+}
+
+sessionStorage.setItem(
+"bmsCurrentUser",
+JSON.stringify({name:user.name,email:user.email})
+);
+
+document.getElementById("loginForm").reset();
+
+openApplication(user);
+
+}
+catch(error) {
+
+document.getElementById("authMessage").textContent = error.message;
+
+}
+
+}
+
+function openApplication(user) {
+
+document.getElementById("authArea").style.display = "none";
+
+document.getElementById("app").style.display = "block";
+
+document.getElementById("mainNav").style.display = "flex";
+
+document.getElementById("headerAccount").style.display = "block";
+
+document.getElementById("loggedUser").textContent = user.name;
+
+document.getElementById("welcomeText").textContent =
+"Welcome, " + user.name + "!";
+
+document.getElementById("accountName").textContent = user.name;
+
+document.getElementById("accountEmail").textContent = user.email;
+
+renderStock();
+
+renderNotifications();
+
+}
+
+function logout() {
+
+sessionStorage.removeItem("bmsCurrentUser");
+
+document.getElementById("app").style.display = "none";
+
+document.getElementById("authArea").style.display = "block";
+
+document.getElementById("mainNav").style.display = "none";
+
+document.getElementById("headerAccount").style.display = "none";
+
+showAuth("login");
+
+}
+
+window.addEventListener("load", () => {
+
+const user = getDataFromSession();
+
+if (user) openApplication(user);
+
+});
+
+function getDataFromSession() {
+
+try {
+return JSON.parse(sessionStorage.getItem("bmsCurrentUser"));
+}
+catch {
+return null;
+}
+
+}
+
+
+// DONOR AND REQUEST DATA
+
+function getDonors() {
+return getData("donors", []);
+}
+
+function getRequests() {
+return getData("bloodRequests", []);
+}
+
+
+// BLOOD STOCK BOARD
+
+function getStock() {
+
+let stock = getData("bloodStock", null);
+
+if (!stock) {
+
+stock = {};
+
+GROUPS.forEach(g => stock[g] = 0);
+
+setData("bloodStock", stock);
+
+}
+
+GROUPS.forEach(g => {
+
+if (typeof stock[g] !== "number")
+stock[g] = 0;
+
+});
+
+return stock;
+
+}
+
+function renderStock() {
+
+const stock = getStock();
+
+document.getElementById("stockBoard").innerHTML =
+GROUPS.map(g => `
+
+<div class="stock-card">
+
+<h3>${g}</h3>
+
+<strong>${stock[g]}</strong>
+
+<p>Units</p>
+
+<p class="${stock[g] <= 2 ? "low-stock" : "good-stock"}">
+${stock[g] <= 2 ? "Low Stock" : "Available"}
+</p>
+
+</div>
+
+`).join("");
+
+}
+
+function updateStock(event) {
+
+event.preventDefault();
+
+const group = document.getElementById("stockGroup").value;
+
+const change = Number(document.getElementById("stockChange").value);
+
+const stock = getStock();
+
+if (!Number.isInteger(change) || stock[group] + change < 0) {
+
+document.getElementById("stockMessage").textContent =
+"Invalid update. Stock cannot be negative.";
+
+return;
+
+}
+
+stock[group] += change;
+
+setData("bloodStock", stock);
+
+document.getElementById("stockMessage").textContent =
+"Blood stock updated successfully.";
+
+document.getElementById("stockChange").value = "";
+
+renderStock();
+
+}
+
+function addStock(group, units) {
+
+const stock = getStock();
+
+stock[group] = Math.max(0, stock[group] + units);
+
+setData("bloodStock", stock);
+
+renderStock();
+
+}
+
+
+// SECURITY: ESCAPE USER INPUT BEFORE DISPLAYING IT
+
+function escapeHTML(value) {
+
+return String(value ?? "").replace(/[&<>"']/g, c => ({
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#39;"
+}[c]));
+
+}
+
+
+// DONATION ELIGIBILITY
+
+function getNextEligibleDate(lastDate) {
+
+if (!lastDate) return "";
+
+const date = new Date(lastDate + "T00:00:00");
+
+date.setMonth(date.getMonth() + 6);
+
+return date.getFullYear() + "-" +
+String(date.getMonth()+1).padStart(2,"0") + "-" +
+String(date.getDate()).padStart(2,"0");
+
+}
+
+function isEligibleToDonate(lastDate) {
+
+if (!lastDate) return true;
+
+const next = new Date(
+getNextEligibleDate(lastDate) + "T00:00:00"
+);
+
+const today = new Date();
+
+today.setHours(0,0,0,0);
+
+return today >= next;
+
+}
+
+
+// REGISTER DONOR
+
+function registerDonorForm(event) {
+
+event.preventDefault();
+
+const donor = {
+
+name:document.getElementById("donorName").value.trim(),
+
+age:document.getElementById("donorAge").value,
+
+bloodGroup:document.getElementById("donorBloodGroup").value,
+
+phone:document.getElementById("donorPhone").value.trim(),
+
+location:document.getElementById("donorLocation").value.trim(),
+
+lastDonationDate:""
+
+};
+
+const donors = getDonors();
+
+if (donors.some(d => d.phone === donor.phone)) {
+
+document.getElementById("donorResult").textContent =
+"This phone number is already registered.";
+
+return;
+
+}
+
+donors.push(donor);
+
+setData("donors",donors);
+
+document.getElementById("donorForm").reset();
+
+document.getElementById("donorResult").textContent =
+"Donor registered successfully!";
+
+displayDonors();
+
+}
+
+
+// SEARCH BLOOD
+
+function searchBlood(event) {
+
+event.preventDefault();
+
+const group = document.getElementById("bloodGroup").value;
+
+const donors = getDonors().filter(
+d => d.bloodGroup === group &&
+isEligibleToDonate(d.lastDonationDate)
+);
+
+const target = document.getElementById("searchResult");
+
+if (!donors.length) {
+
+target.textContent =
+"No eligible registered donors found for " + group + ".";
+
+return;
+
+}
+
+target.innerHTML = "<h3>Available Donors</h3>" +
+
+donors.map(d => `
+
+<div class="donor-card">
+
+<p><b>Name:</b> ${escapeHTML(d.name)}</p>
+
+<p><b>Age:</b> ${escapeHTML(d.age)}</p>
+
+<p><b>Blood Group:</b> ${escapeHTML(d.bloodGroup)}</p>
+
+<p><b>Location:</b> ${escapeHTML(d.location)}</p>
+
+<p><b>Phone:</b>
+<a href="tel:${escapeHTML(d.phone)}">
+${escapeHTML(d.phone)}
+</a>
+</p>
+
+</div>
+
+`).join("");
+
+}
+
+
+// DISPLAY DONORS
+
+function displayDonors() {
+
+const donors = getDonors();
+
+const target = document.getElementById("donorList");
+
+if (!donors.length) {
+
+target.textContent = "No registered donors found.";
+
+return;
+
+}
+
+target.innerHTML = "<h3>Registered Donors</h3>" +
+
+donors.map((d,i) => {
+
+const eligible = isEligibleToDonate(d.lastDonationDate);
+
+const next = getNextEligibleDate(d.lastDonationDate);
+
+return `
+
+<div class="donor-card">
+
+<p><b>Name:</b> ${escapeHTML(d.name)}</p>
+
+<p><b>Age:</b> ${escapeHTML(d.age)}</p>
+
+<p><b>Blood Group:</b> ${escapeHTML(d.bloodGroup)}</p>
+
+<p><b>Phone:</b> ${escapeHTML(d.phone)}</p>
+
+<p><b>Location:</b> ${escapeHTML(d.location)}</p>
+
+<p><b>Last Donation:</b>
+${d.lastDonationDate || "Not donated yet"}
+</p>
+
+<p><b>Donation Status:</b>
+
+<span class="${eligible ? "eligible" : "not-eligible"}">
+
+${eligible ? "Eligible to donate" : "Not eligible until " + next}
+
+</span>
+
+</p>
+
+${eligible ? `
+
+<button class="green" onclick="recordDonation(${i})">
+Record Blood Donation
+</button>
+
+` : ""}
+
+<button class="secondary" onclick="deleteDonor(${i})">
+Delete Donor
+</button>
+
+</div>
+
+`;
+
+}).join("");
+
+}
+
+
+// RECORD DONATION
+
+function recordDonation(index) {
+
+const donors = getDonors();
+
+const donor = donors[index];
+
+if (!donor || !isEligibleToDonate(donor.lastDonationDate))
+return;
+
+donor.lastDonationDate = new Date().toISOString().slice(0,10);
+
+donors[index] = donor;
+
+setData("donors",donors);
+
+addStock(donor.bloodGroup,1);
+
+document.getElementById("donorResult").textContent =
+"Donation recorded and one unit added to the stock board. Update stock according to verified collection records.";
+
+displayDonors();
+
+}
+
+
+// DELETE DONOR
+
+function deleteDonor(index) {
+
+const donors = getDonors();
+
+donors.splice(index,1);
+
+setData("donors",donors);
+
+displayDonors();
+
+}
+
+
+// REQUEST BLOOD
+
+function requestBlood(event) {
+
+event.preventDefault();
+
+const request = {
+
+id:Date.now(),
+
+patientName:document.getElementById("patientName").value.trim(),
+
+age:document.getElementById("patientAge").value,
+
+bloodGroup:document.getElementById("requestBloodGroup").value,
+
+units:Number(document.getElementById("requestUnits").value),
+
+phone:document.getElementById("patientPhone").value.trim(),
+
+location:document.getElementById("patientLocation").value.trim(),
+
+emergency:document.getElementById("isEmergency").checked,
+
+status:"Pending",
+
+date:new Date().toLocaleString()
+
+};
+
+const requests = getRequests();
+
+requests.push(request);
+
+setData("bloodRequests",requests);
+
+document.getElementById("requestForm").reset();
+
+document.getElementById("requestUnits").value = 1;
+
+document.getElementById("requestResult").textContent =
+request.emergency ?
+"EMERGENCY request submitted. An in-app notification has been created." :
+"Blood request submitted successfully.";
+
+renderNotifications();
+
+}
+
+
+// EMERGENCY NOTIFICATIONS
+
+function renderNotifications() {
+
+const emergencies = getRequests().filter(
+r => r.emergency && r.status === "Pending"
+);
+
+const target = document.getElementById("notificationList");
+
+if (!emergencies.length) {
+
+target.textContent = "No pending emergency requests at present.";
+
+return;
+
+}
+
+target.innerHTML = emergencies.map(r => `
+
+<div class="notification emergency">
+
+<span class="emergency-label">🚨 EMERGENCY</span>
+
+<p><b>Patient:</b> ${escapeHTML(r.patientName)}</p>
+
+<p><b>Blood Group:</b> ${escapeHTML(r.bloodGroup)}
+| <b>Units:</b> ${r.units}</p>
+
+<p><b>Location:</b> ${escapeHTML(r.location)}</p>
+
+<p><b>Contact:</b> ${escapeHTML(r.phone)}</p>
+
+<p><b>Submitted:</b> ${escapeHTML(r.date)}</p>
+
+</div>
+
+`).join("");
+
+}
+
+
+// DISPLAY BLOOD REQUESTS
+
+function displayBloodRequests(event) {
+
+if (event) event.preventDefault();
+
+const group = document.getElementById("managementBloodGroup").value;
+
+const requests = getRequests().filter(
+r => r.bloodGroup === group
+);
+
+const target = document.getElementById("requestList");
+
+if (!requests.length) {
+
+target.textContent = "No blood requests found for " + group + ".";
+
+return;
+
+}
+
+target.innerHTML = requests.map(r => `
+
+<div class="request-card ${r.emergency && r.status === "Pending" ? "emergency" : ""}">
+
+${r.emergency ? '<span class="emergency-label">🚨 EMERGENCY</span>' : ""}
+
+<p><b>Patient Name:</b> ${escapeHTML(r.patientName)}</p>
+
+<p><b>Age:</b> ${escapeHTML(r.age)}</p>
+
+<p><b>Blood Group:</b> ${escapeHTML(r.bloodGroup)}</p>
+
+<p><b>Required Units:</b> ${r.units || 1}</p>
+
+<p><b>Phone:</b> ${escapeHTML(r.phone)}</p>
+
+<p><b>Location:</b> ${escapeHTML(r.location)}</p>
+
+<p><b>Status:</b>
+
+<span class="${r.status === "Pending" ? "pending" : "fulfilled"}">
+${r.status}
+</span>
+
+</p>
+
+${r.status === "Pending" ? `
+
+<button class="green" onclick="fulfillRequest(${r.id})">
+Mark as Fulfilled
+</button>
+
+` : "<p class='fulfilled'>Request completed.</p>"}
+
+</div>
+
+`).join("");
+
+}
+
+
+// FULFILL REQUEST
+
+function fulfillRequest(id) {
+
+const requests = getRequests();
+
+const request = requests.find(r => r.id === id);
+
+if (!request || request.status !== "Pending")
+return;
+
+const stock = getStock();
+
+const units = Number(request.units || 1);
+
+if (stock[request.bloodGroup] < units) {
+
+alert("Not enough recorded stock. Update the stock board before marking this request fulfilled.");
+
+return;
+
+}
+
+if (!confirm("Confirm that the requested units have actually been issued by the authorized blood bank?"))
+return;
+
+stock[request.bloodGroup] -= units;
+
+setData("bloodStock",stock);
+
+request.status = "Fulfilled";
+
+setData("bloodRequests",requests);
+
+renderStock();
+
+renderNotifications();
+
+displayBloodRequests();
+
+}
+
+</script>
+
+</body>
+</html>
